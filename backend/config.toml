@@ -23,7 +23,7 @@ enabled = false
 [database]
 host              = "localhost"
 port              = 5432
-name              = "ebay_intel"
+name              = "ebay_market_intel"
 pool_size         = 10
 pool_max_overflow = 5
 
