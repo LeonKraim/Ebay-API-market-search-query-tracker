@@ -1,0 +1,23 @@
+{
+  "total": 5,
+  "limit": 100,
+  "offset": 100,
+  "itemSummaries": [
+    {
+      "itemId": "v1|444444444|0",
+      "legacyItemId": "444444444",
+      "title": "Nintendo Switch Joy-Con Pair",
+      "price": {"value": "54.99", "currency": "GBP"},
+      "buyingOptions": ["FIXED_PRICE"],
+      "itemWebUrl": "https://www.ebay.co.uk/itm/444444444"
+    },
+    {
+      "itemId": "v1|555555555|0",
+      "legacyItemId": "555555555",
+      "title": "Nintendo Switch Dock Station",
+      "price": {"value": "39.99", "currency": "GBP"},
+      "buyingOptions": ["AUCTION"],
+      "itemWebUrl": "https://www.ebay.co.uk/itm/555555555"
+    }
+  ]
+}

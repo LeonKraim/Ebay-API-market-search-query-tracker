@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<findItemsByKeywordsResponse xmlns="http://www.ebay.com/marketplace/search/v1/services">
+  <ack>Success</ack>
+  <searchResult count="0">
+  </searchResult>
+  <paginationOutput>
+    <totalEntries>0</totalEntries>
+    <totalPages>0</totalPages>
+  </paginationOutput>
+</findItemsByKeywordsResponse>

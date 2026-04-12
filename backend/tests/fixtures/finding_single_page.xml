@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<findItemsByKeywordsResponse xmlns="http://www.ebay.com/marketplace/search/v1/services">
+  <ack>Success</ack>
+  <searchResult count="3">
+    <item>
+      <itemId>111111111</itemId>
+      <title>Nintendo Switch OLED White</title>
+      <viewItemURL>https://www.ebay.co.uk/itm/111111111</viewItemURL>
+      <galleryURL>https://i.ebayimg.com/images/g/111/s-l140.jpg</galleryURL>
+      <sellingStatus>
+        <currentPrice currencyId="GBP">259.99</currentPrice>
+        <sellingState>Active</sellingState>
+        <bidCount>0</bidCount>
+      </sellingStatus>
+      <listingInfo>
+        <buyItNowAvailable>true</buyItNowAvailable>
+        <listingType>FixedPrice</listingType>
+        <endTime>2026-06-30T23:59:59.000Z</endTime>
+      </listingInfo>
+      <watchCount>12</watchCount>
+    </item>
+    <item>
+      <itemId>222222222</itemId>
+      <title>Nintendo Switch Lite Turquoise</title>
+      <viewItemURL>https://www.ebay.co.uk/itm/222222222</viewItemURL>
+      <galleryURL>https://i.ebayimg.com/images/g/222/s-l140.jpg</galleryURL>
+      <sellingStatus>
+        <currentPrice currencyId="GBP">149.00</currentPrice>
+        <sellingState>Active</sellingState>
+        <bidCount>3</bidCount>
+      </sellingStatus>
+      <listingInfo>
+        <buyItNowAvailable>false</buyItNowAvailable>
+        <listingType>Auction</listingType>
+        <endTime>2026-04-15T20:00:00.000Z</endTime>
+      </listingInfo>
+      <watchCount>5</watchCount>
+    </item>
+    <item>
+      <itemId>333333333</itemId>
+      <title>Nintendo Switch Bundle with Games</title>
+      <viewItemURL>https://www.ebay.co.uk/itm/333333333</viewItemURL>
+      <sellingStatus>
+        <currentPrice currencyId="USD">299.99</currentPrice>
+        <sellingState>Active</sellingState>
+      </sellingStatus>
+      <listingInfo>
+        <buyItNowAvailable>true</buyItNowAvailable>
+        <listingType>FixedPrice</listingType>
+        <endTime>2026-05-01T12:00:00.000Z</endTime>
+      </listingInfo>
+    </item>
+  </searchResult>
+  <paginationOutput>
+    <totalEntries>3</totalEntries>
+    <totalPages>1</totalPages>
+  </paginationOutput>
+</findItemsByKeywordsResponse>

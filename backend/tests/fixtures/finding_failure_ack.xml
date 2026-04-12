@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<findItemsByKeywordsResponse xmlns="http://www.ebay.com/marketplace/search/v1/services">
+  <ack>Failure</ack>
+  <errorMessage>
+    <error>
+      <errorId>2</errorId>
+      <domain>Marketplace</domain>
+      <severity>Error</severity>
+      <category>Request</category>
+      <message>Invalid keyword.</message>
+    </error>
+  </errorMessage>
+  <searchResult count="0">
+  </searchResult>
+</findItemsByKeywordsResponse>

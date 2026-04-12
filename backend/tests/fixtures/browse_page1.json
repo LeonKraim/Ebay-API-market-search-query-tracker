@@ -1,0 +1,32 @@
+{
+  "total": 5,
+  "limit": 100,
+  "offset": 0,
+  "itemSummaries": [
+    {
+      "itemId": "v1|111111111|0",
+      "legacyItemId": "111111111",
+      "title": "Nintendo Switch OLED White",
+      "price": {"value": "259.99", "currency": "GBP"},
+      "buyingOptions": ["FIXED_PRICE"],
+      "itemWebUrl": "https://www.ebay.co.uk/itm/111111111",
+      "itemEndDate": "2026-06-30T23:59:59.000Z"
+    },
+    {
+      "itemId": "v1|222222222|0",
+      "legacyItemId": "222222222",
+      "title": "Nintendo Switch Lite Turquoise",
+      "price": {"value": "149.00", "currency": "GBP"},
+      "buyingOptions": ["AUCTION"],
+      "itemWebUrl": "https://www.ebay.co.uk/itm/222222222"
+    },
+    {
+      "itemId": "v1|333333333|0",
+      "legacyItemId": "333333333",
+      "title": "Nintendo Switch Bundle with Games",
+      "price": {"value": "299.99", "currency": "GBP"},
+      "buyingOptions": ["FIXED_PRICE"],
+      "itemWebUrl": "https://www.ebay.co.uk/itm/333333333"
+    }
+  ]
+}

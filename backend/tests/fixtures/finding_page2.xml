@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<findItemsByKeywordsResponse xmlns="http://www.ebay.com/marketplace/search/v1/services">
+  <ack>Success</ack>
+  <searchResult count="2">
+    <item>
+      <itemId>444444444</itemId>
+      <title>Nintendo Switch Joy-Con Pair</title>
+      <viewItemURL>https://www.ebay.co.uk/itm/444444444</viewItemURL>
+      <sellingStatus>
+        <currentPrice currencyId="GBP">54.99</currentPrice>
+        <sellingState>Active</sellingState>
+      </sellingStatus>
+      <listingInfo>
+        <listingType>FixedPrice</listingType>
+      </listingInfo>
+    </item>
+    <item>
+      <itemId>555555555</itemId>
+      <title>Nintendo Switch Dock Station</title>
+      <viewItemURL>https://www.ebay.co.uk/itm/555555555</viewItemURL>
+      <sellingStatus>
+        <currentPrice currencyId="GBP">39.99</currentPrice>
+        <sellingState>Active</sellingState>
+      </sellingStatus>
+      <listingInfo>
+        <listingType>Auction</listingType>
+      </listingInfo>
+    </item>
+  </searchResult>
+  <paginationOutput>
+    <totalEntries>5</totalEntries>
+    <totalPages>2</totalPages>
+  </paginationOutput>
+</findItemsByKeywordsResponse>

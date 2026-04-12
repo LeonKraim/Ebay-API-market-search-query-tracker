@@ -1,0 +1,14 @@
+name: ebay-market-intel-platform
+description: Complete eBay Market Intelligence Platform implementation
+schema: spec-driven
+artifacts:
+  proposal:
+    path: proposal.md
+  design:
+    path: design.md
+  specs:
+    path: specs
+  tasks:
+    path: tasks.md
+status: active
+created_at: 2026-04-12T05:09:00Z
