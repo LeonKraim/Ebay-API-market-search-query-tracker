@@ -42,7 +42,6 @@ class Settings(BaseSettings):
     # ── Secrets (from .env or real environment) ──────────────────────────────
     ebay_app_id: str = Field(default="", description="eBay Application ID (Client ID)")
     ebay_cert_id: str = Field(default="", description="eBay Certificate ID (Client Secret)")
-    ebay_auth_token: str = Field(default="", description="eBay Auth Token (optional)")
     database_user: str = Field(default="ebay")
     database_password: str = Field(default="")
     api_token: str = Field(default="", description="Bearer token for API auth (optional)")

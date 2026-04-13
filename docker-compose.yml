@@ -30,7 +30,6 @@ services:
       DATABASE_PASSWORD: ebay_market_intel_secret
       EBAY_APP_ID: ${EBAY_APP_ID}
       EBAY_CERT_ID: ${EBAY_CERT_ID}
-      EBAY_AUTH_TOKEN: ${EBAY_AUTH_TOKEN}
     volumes:
       - backend_logs:/app/logs
     ports:
