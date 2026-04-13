@@ -6,12 +6,12 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: ebay_market_intel
-      POSTGRES_USER: ${DATABASE_USER:-ebay}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_USER: ebay
+      POSTGRES_PASSWORD: ebay_market_intel_secret
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-ebay} -d ebay_market_intel"]
+      test: ["CMD-SHELL", "pg_isready -U ebay -d ebay_market_intel"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -26,6 +26,11 @@ services:
       DATABASE_HOST: postgres
       DATABASE_PORT: 5432
       DATABASE_NAME: ebay_market_intel
+      DATABASE_USER: ebay
+      DATABASE_PASSWORD: ebay_market_intel_secret
+      EBAY_APP_ID: ${EBAY_APP_ID}
+      EBAY_CERT_ID: ${EBAY_CERT_ID}
+      EBAY_AUTH_TOKEN: ${EBAY_AUTH_TOKEN}
     volumes:
       - backend_logs:/app/logs
     ports:
