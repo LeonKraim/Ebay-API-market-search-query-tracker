@@ -45,4 +45,10 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./postgres_data
   backend_logs:
+    driver: local

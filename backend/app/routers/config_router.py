@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_settings
 from app.database import get_db
 from app.models.settings import AppSetting
+from app.models.query import SearchQuery
 from app.routers.auth import verify_token
 from app.services.ebay_taxonomy import get_category_suggestions
 from app.services.ebay_sites import EBAY_SITES
@@ -133,4 +134,36 @@ async def update_ebay_site(site_id: str = Body(..., embed=True), db: AsyncSessio
     await _save_db_setting(db, "ebay_site_id", site_id)
     logger.info("[CONFIG] Updated ebay.site_id to '{site}'", site=site_id)
     return {"site_id": site_id, "site_name": EBAY_SITES[site_id]}
+
+
+@router.get("/persistence-check", dependencies=[Depends(verify_token)])
+async def check_persistence(db: AsyncSession = Depends(get_db)):
+    """
+    Diagnostic endpoint: Returns database state to verify that user settings
+    persist across container restarts and deployments.
+    
+    If this endpoint shows an empty app_settings table after you've saved settings,
+    it indicates the PostgreSQL volume is not persisting data.
+    """
+    from datetime import datetime
+    from sqlalchemy import func
+    
+    # Count records in each table
+    result = await db.execute(select(func.count()).select_from(AppSetting))
+    setting_count = result.scalar() or 0
+    
+    result = await db.execute(select(func.count()).select_from(SearchQuery))
+    query_count = result.scalar() or 0
+    
+    # Get all current settings
+    result = await db.execute(select(AppSetting))
+    all_settings = {row.key: row.value for row in result.scalars().all()}
+    
+    return {
+        "timestamp": datetime.utcnow().isoformat(),
+        "app_settings_count": setting_count,
+        "saved_queries_count": query_count,
+        "settings": all_settings,
+        "persistence_status": "✅ Data persisting" if setting_count > 0 else "❌ No persistent data",
+    }
 
