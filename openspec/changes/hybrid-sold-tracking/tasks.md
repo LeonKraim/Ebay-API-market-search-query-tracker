@@ -5,4 +5,4 @@
 - [x] Task 3: Add disappearance tracking logic to `poll_runner.py` — detect items that vanished between snapshots and insert them as `sold_records` with `source='disappeared'`
 - [x] Task 4: Harden `sold_scraper.py` — CAPTCHA detection, rotating User-Agents, randomized delay jitter
 - [x] Task 5: Update sold record insert in `poll_runner.py` to explicitly set `source='scraped'`
-- [ ] Task 6: Deploy, verify all acceptance criteria
+- [x] Task 6: Deploy, verify all acceptance criteria
