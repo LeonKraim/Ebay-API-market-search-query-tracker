@@ -31,7 +31,7 @@ export function QueriesPage({ onOpenQuery }: QueriesPageProps) {
   const stopMutation = useStopQueryPoll()
   const updateMutation = useUpdateQuery()
   const { data: appConfig } = useAppConfig()
-  const defaultIntervalMinutes = appConfig?.scheduler_default_interval_minutes ?? 1440
+  const defaultIntervalMinutes = appConfig?.scheduler?.default_interval_minutes ?? 1440
 
   const [showForm, setShowForm] = useState(false)
   const [editTarget, setEditTarget] = useState<SearchQuery | null>(null)

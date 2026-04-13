@@ -137,10 +137,23 @@ export interface AppConfig {
   app_debug: boolean
   auth_enabled: boolean
   cors_origins: string[]
-  ebay_site_id: string
-  ebay_max_pages: number
-  scheduler_default_interval_minutes: number
-  scheduler_max_concurrent_polls: number
+  ebay?: {
+    site_id: string
+    max_pages: number
+  }
+  scheduler?: {
+    default_interval_minutes: number
+    max_concurrent_polls: number
+  }
+  scraper?: {
+    enabled: boolean
+    completed_days: number
+  }
+  // Legacy flat keys for backward compatibility
+  ebay_site_id?: string
+  ebay_max_pages?: number
+  scheduler_default_interval_minutes?: number
+  scheduler_max_concurrent_polls?: number
 }
 
 export interface SettingsUpdate {
