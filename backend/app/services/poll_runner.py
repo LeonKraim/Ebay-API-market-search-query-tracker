@@ -212,9 +212,10 @@ async def run_poll(query_id: int) -> None:
             ]
 
             # Insert new listings with ON CONFLICT DO NOTHING
-            # Chunk into batches of 3,000 rows to stay under PostgreSQL's 65,535 bind-parameter limit
-            # (19 columns × 3,000 rows = 57,000 params — safely under the hard limit)
-            _LISTING_BATCH_SIZE = 3_000
+            # Chunk into batches of 1,500 rows to stay under asyncpg's 32,767 bind-parameter limit
+            # (asyncpg uses signed int16 for parameter count: max 32,767)
+            # (19 columns × 1,500 rows = 28,500 params — safely under the hard limit)
+            _LISTING_BATCH_SIZE = 1_500
             if new_rows:
                 for _batch_start in range(0, len(new_rows), _LISTING_BATCH_SIZE):
                     _batch = new_rows[_batch_start : _batch_start + _LISTING_BATCH_SIZE]
