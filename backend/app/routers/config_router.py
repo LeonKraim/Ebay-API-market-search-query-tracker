@@ -46,32 +46,15 @@ def _build_public_config(overrides: dict[str, str]) -> dict:
     def _int(key: str, default: int) -> int:
         return int(overrides[key]) if key in overrides else default
 
-    def _bool(key: str, default: bool) -> bool:
-        if key in overrides:
-            return overrides[key].lower() == "true"
-        return default
-
     return {
-        "app": {"title": s.app_title, "debug": s.app_debug, "log_level": s.log_level},
-        "api": {"host": s.api_host, "port": s.api_port, "cors_origins": s.cors_origins},
-        "auth": {"enabled": s.auth_enabled},
-        "database": {"host": s.db_host, "port": s.db_port, "name": s.db_name},
-        "ebay": {
-            "site_id": overrides.get("ebay_site_id", s.ebay_site_id),
-            "max_pages": _int("ebay_max_pages", s.ebay_max_pages),
-            "results_per_page": s.ebay_results_per_page,
-            "retry_attempts": s.ebay_retry_attempts,
-        },
-        "scraper": {
-            "enabled": _bool("scraper_enabled", s.scraper_enabled),
-            "completed_days": _int("scraper_completed_days", s.scraper_completed_days),
-            "delay_between_pages_seconds": s.scraper_delay_between_pages_seconds,
-        },
-        "scheduler": {
-            "default_interval_minutes": _int("scheduler_default_interval_minutes", s.scheduler_default_interval_minutes),
-            "max_concurrent_polls": _int("scheduler_max_concurrent_polls", s.scheduler_max_concurrent_polls),
-            "jitter_seconds": s.scheduler_jitter_seconds,
-        },
+        "app_title": s.app_title,
+        "app_debug": s.app_debug,
+        "auth_enabled": s.auth_enabled,
+        "cors_origins": s.cors_origins,
+        "ebay_site_id": overrides.get("ebay_site_id", s.ebay_site_id),
+        "ebay_max_pages": _int("ebay_max_pages", s.ebay_max_pages),
+        "scheduler_default_interval_minutes": _int("scheduler_default_interval_minutes", s.scheduler_default_interval_minutes),
+        "scheduler_max_concurrent_polls": _int("scheduler_max_concurrent_polls", s.scheduler_max_concurrent_polls),
     }
 
 
