@@ -17,6 +17,7 @@ class SoldRead(BaseModel):
     listing_type: str | None
     image_url: str | None
     item_url: str | None
+    source: str = "scraped"
     scraped_at: datetime
 
     model_config = {"from_attributes": True}
