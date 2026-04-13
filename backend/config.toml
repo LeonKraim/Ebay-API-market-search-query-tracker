@@ -29,7 +29,7 @@ pool_max_overflow = 5
 
 [ebay]
 site_id                  = "EBAY-GB"   # EBAY-US | EBAY-GB | EBAY-DE | EBAY-AU | EBAY-CA | EBAY-FR
-max_pages                = 10000       # maximum pages to fetch per Finding API poll (set high to get all results)
+max_pages                = 2500        # maximum pages to fetch per Finding API poll
 results_per_page         = 100         # items per page (eBay max is 100)
 request_timeout_seconds  = 15
 retry_attempts           = 3
@@ -42,6 +42,6 @@ user_agent                    = "Mozilla/5.0 (compatible; EbayIntelBot/1.0)"
 delay_between_pages_seconds   = 1.5    # polite delay between scraper page requests
 
 [scheduler]
-default_interval_minutes = 60   # how often to poll each query (can be overridden per-query)
+default_interval_minutes = 1440  # how often to poll each query (can be overridden per-query)
 max_concurrent_polls     = 3    # maximum simultaneous eBay poll jobs
 jitter_seconds           = 30   # random 0–N second jitter added to each scheduled fire time

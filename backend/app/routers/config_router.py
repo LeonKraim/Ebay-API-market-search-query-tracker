@@ -1,17 +1,78 @@
 from __future__ import annotations
 
-import re
-
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from loguru import logger
 from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import _CONFIG_PATH, get_settings
+from app.config import get_settings
+from app.database import get_db
+from app.models.settings import AppSetting
 from app.routers.auth import verify_token
 from app.services.ebay_taxonomy import get_category_suggestions
 from app.services.ebay_sites import EBAY_SITES
 
 router = APIRouter(prefix="/config", tags=["config"])
+
+# Keys stored in the DB; config.toml provides the defaults.
+_EDITABLE_KEYS = {
+    "scheduler_default_interval_minutes",
+    "scheduler_max_concurrent_polls",
+    "ebay_max_pages",
+    "scraper_enabled",
+    "scraper_completed_days",
+    "ebay_site_id",
+}
+
+
+async def _load_db_overrides(db: AsyncSession) -> dict[str, str]:
+    result = await db.execute(select(AppSetting))
+    return {row.key: row.value for row in result.scalars().all()}
+
+
+async def _save_db_setting(db: AsyncSession, key: str, value: str) -> None:
+    existing = await db.get(AppSetting, key)
+    if existing:
+        existing.value = value
+    else:
+        db.add(AppSetting(key=key, value=value))
+    await db.commit()
+
+
+def _build_public_config(overrides: dict[str, str]) -> dict:
+    s = get_settings()
+
+    def _int(key: str, default: int) -> int:
+        return int(overrides[key]) if key in overrides else default
+
+    def _bool(key: str, default: bool) -> bool:
+        if key in overrides:
+            return overrides[key].lower() == "true"
+        return default
+
+    return {
+        "app": {"title": s.app_title, "debug": s.app_debug, "log_level": s.log_level},
+        "api": {"host": s.api_host, "port": s.api_port, "cors_origins": s.cors_origins},
+        "auth": {"enabled": s.auth_enabled},
+        "database": {"host": s.db_host, "port": s.db_port, "name": s.db_name},
+        "ebay": {
+            "site_id": overrides.get("ebay_site_id", s.ebay_site_id),
+            "max_pages": _int("ebay_max_pages", s.ebay_max_pages),
+            "results_per_page": s.ebay_results_per_page,
+            "retry_attempts": s.ebay_retry_attempts,
+        },
+        "scraper": {
+            "enabled": _bool("scraper_enabled", s.scraper_enabled),
+            "completed_days": _int("scraper_completed_days", s.scraper_completed_days),
+            "delay_between_pages_seconds": s.scraper_delay_between_pages_seconds,
+        },
+        "scheduler": {
+            "default_interval_minutes": _int("scheduler_default_interval_minutes", s.scheduler_default_interval_minutes),
+            "max_concurrent_polls": _int("scheduler_max_concurrent_polls", s.scheduler_max_concurrent_polls),
+            "jitter_seconds": s.scheduler_jitter_seconds,
+        },
+    }
 
 
 class CategorySuggestionRead(BaseModel):
@@ -25,11 +86,11 @@ class CategorySuggestionList(BaseModel):
 
 
 @router.get("", dependencies=[Depends(verify_token)])
-async def get_public_config():
-    """Return all non-secret configuration values from config.toml."""
+async def get_public_config(db: AsyncSession = Depends(get_db)):
+    """Return all non-secret configuration values, with DB overrides applied."""
     logger.debug("[ROUTER] GET /config")
-    settings = get_settings()
-    return settings.public_config
+    overrides = await _load_db_overrides(db)
+    return _build_public_config(overrides)
 
 
 @router.get("/ebay-sites", dependencies=[Depends(verify_token)])
@@ -70,71 +131,23 @@ class SettingsUpdate(BaseModel):
 
 
 @router.patch("/settings", dependencies=[Depends(verify_token)])
-async def update_settings(body: SettingsUpdate):
-    """Update editable settings in config.toml."""
-    text = _CONFIG_PATH.read_text(encoding="utf-8")
-
-    if body.scheduler_default_interval_minutes is not None:
-        text = re.sub(
-            r'(default_interval_minutes\s*=\s*)\d+',
-            rf'\g<1>{body.scheduler_default_interval_minutes}',
-            text,
-        )
-    if body.scheduler_max_concurrent_polls is not None:
-        text = re.sub(
-            r'(max_concurrent_polls\s*=\s*)\d+',
-            rf'\g<1>{body.scheduler_max_concurrent_polls}',
-            text,
-        )
-    if body.ebay_max_pages is not None:
-        text = re.sub(
-            r'(max_pages\s*=\s*)\d+',
-            rf'\g<1>{body.ebay_max_pages}',
-            text,
-        )
-    if body.scraper_enabled is not None:
-        val = "true" if body.scraper_enabled else "false"
-        # Section-aware: only replace enabled inside [scraper], not [auth]
-        text = re.sub(
-            r'(\[scraper\][^\[]*enabled\s*=\s*)(true|false)',
-            rf'\g<1>{val}',
-            text,
-            flags=re.DOTALL,
-        )
-    if body.scraper_completed_days is not None:
-        text = re.sub(
-            r'(completed_days\s*=\s*)\d+',
-            rf'\g<1>{body.scraper_completed_days}',
-            text,
-        )
-
-    _CONFIG_PATH.write_text(text, encoding="utf-8")
-    logger.info("[CONFIG] Settings updated: {body}", body=body.model_dump(exclude_none=True))
-    get_settings.cache_clear()
-    return get_settings().public_config
+async def update_settings(body: SettingsUpdate, db: AsyncSession = Depends(get_db)):
+    """Persist editable settings to the database so they survive redeployments."""
+    patch = body.model_dump(exclude_none=True)
+    for key, val in patch.items():
+        await _save_db_setting(db, key, str(val).lower() if isinstance(val, bool) else str(val))
+    logger.info("[CONFIG] Settings updated: {patch}", patch=patch)
+    overrides = await _load_db_overrides(db)
+    return _build_public_config(overrides)
 
 
 @router.put("/ebay-site", dependencies=[Depends(verify_token)])
-async def update_ebay_site(site_id: str = Body(..., embed=True)):
-    """Update the default eBay site in config.toml and reload settings."""
+async def update_ebay_site(site_id: str = Body(..., embed=True), db: AsyncSession = Depends(get_db)):
+    """Persist the default eBay site to the database."""
     if site_id not in EBAY_SITES:
         raise HTTPException(status_code=400, detail=f"Unknown site_id '{site_id}'")
 
-    # Read current config.toml
-    text = _CONFIG_PATH.read_text(encoding="utf-8")
-
-    # Replace site_id value in the [ebay] section
-    new_text = re.sub(
-        r'(site_id\s*=\s*)(".*?"|\'.*?\')',
-        rf'\1"{site_id}"',
-        text,
-    )
-
-    _CONFIG_PATH.write_text(new_text, encoding="utf-8")
+    await _save_db_setting(db, "ebay_site_id", site_id)
     logger.info("[CONFIG] Updated ebay.site_id to '{site}'", site=site_id)
+    return {"site_id": site_id, "site_name": EBAY_SITES[site_id]}
 
-    # Clear cached settings so next access picks up the new value
-    get_settings.cache_clear()
-    settings = get_settings()
-
-    return {"site_id": settings.ebay_site_id, "site_name": EBAY_SITES[site_id]}
