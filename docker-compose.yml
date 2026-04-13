@@ -15,8 +15,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    ports:
-      - "5432:5432"
 
   backend:
     build: ./backend
@@ -24,15 +22,14 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    env_file: .env
     environment:
       DATABASE_HOST: postgres
       DATABASE_PORT: 5432
       DATABASE_NAME: ebay_market_intel
     volumes:
-      - ./logs:/app/logs
+      - backend_logs:/app/logs
     ports:
-      - "8000:8000"
+      - "47821:8000"
 
   frontend:
     build: ./frontend
@@ -40,7 +37,8 @@ services:
     depends_on:
       - backend
     ports:
-      - "3000:80"
+      - "31457:80"
 
 volumes:
   postgres_data:
+  backend_logs:
