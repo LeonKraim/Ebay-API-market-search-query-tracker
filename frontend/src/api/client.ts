@@ -1,8 +1,7 @@
 /**
- * Typed API client that wraps fetch with NProgress integration,
- * consistent error handling, and request logging.
+ * Typed API client that wraps fetch with consistent error handling
+ * and request logging.
  */
-import NProgress from 'nprogress'
 import { logger } from '@/lib/logger'
 
 const BASE = '/api/v1'
@@ -202,7 +201,6 @@ async function apiFetch<T>(
   const url = `${BASE}${path}`
 
   _pendingRequests++
-  NProgress.start()
   logger.debug('API →', options.method ?? 'GET', url)
 
   try {
@@ -228,7 +226,6 @@ async function apiFetch<T>(
     _pendingRequests--
     if (_pendingRequests <= 0) {
       _pendingRequests = 0
-      NProgress.done()
     }
   }
 }
