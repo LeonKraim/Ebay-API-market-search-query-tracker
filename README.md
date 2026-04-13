@@ -324,12 +324,6 @@ GET /stats/items-evaluated gets total unique items count.
 
 GET /logs/app gets application log file content with optional tail parameter.
 
-### Interactive Docs
-
-Swagger UI at http://localhost:8000/docs
-ReDoc at http://localhost:8000/redoc
-OpenAPI JSON at http://localhost:8000/openapi.json
-
 ## Configuration
 
 ### Backend Settings
@@ -373,17 +367,6 @@ cd frontend
 npm run test
 npm run test:watch
 npm run test:e2e
-```
-
-### Code Quality
-
-Backend code follows PEP 8 conventions with no linter configured.
-
-Frontend:
-
-```bash
-cd frontend
-npm run lint
 ```
 
 ### Debugging
@@ -443,7 +426,7 @@ docker exec ebay-api-market-search-query-tracker-backend-1 \
 
 ### eBay API 401 or 403 Errors
 
-Verify EBAY_APP_ID and EBAY_CERT_ID in `.env` are correct. Ensure your eBay app has Browse API permissions enabled. Some eBay tokens need periodic renewal.
+Verify EBAY_APP_ID and EBAY_CERT_ID in `.env` are correct. Ensure your eBay app has Browse API permissions enabled.
 
 ### Polls Not Running
 
@@ -452,41 +435,3 @@ Verify EBAY_APP_ID and EBAY_CERT_ID in `.env` are correct. Ensure your eBay app 
 3. Verify query is enabled showing a green badge
 4. Check interval_minutes is not set to 0
 
-### Frontend API Calls Failing
-
-Check browser Network tab in DevTools. Verify backend is running on localhost:8000. Check CORS settings in backend/app/main.py if getting CORS errors.
-
-## Recent Features and Improvements
-
-### Stop On The Fly
-
-Clicking Stop on an active query now halts polling between eBay API page requests. The button changes to Run now instantly with no 5 second delay. Implementation uses asyncio.Event for cooperative cancellation and APScheduler.stop for task-agnostic shutdown.
-
-### Inline Enable or Disable
-
-Click the enabled or disabled badge on any query card to toggle scheduling without opening the editor. Toggle is fully wired end-to-end.
-
-### Passive Scheduler Polling
-
-Frontend polls scheduler status every 5 seconds which is configurable. Cards reflect running_query_ids from server enabling real-time UI sync.
-
-## License
-
-See LICENSE file in repository.
-
-## Contact and Support
-
-For issues, feature requests, or contributions, please open an issue or submit a pull request on GitHub.
-
-## Changelog
-
-### v1.0.0 - Current
-
-- Full query CRUD with enable and disable
-- Real-time polling on configurable intervals
-- Stop on the fly with cooperative cancellation
-- Optimistic UI for stop button
-- Dashboard, listings, sold, stats, scheduler, and logs views
-- Docker Compose setup with PostgreSQL, FastAPI, and React
-- Comprehensive test coverage
-- API documentation with Swagger and ReDoc
