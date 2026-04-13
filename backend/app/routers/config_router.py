@@ -47,15 +47,29 @@ def _build_public_config(overrides: dict[str, str]) -> dict:
     def _int(key: str, default: int) -> int:
         return int(overrides[key]) if key in overrides else default
 
+    def _bool(key: str, default: bool) -> bool:
+        if key in overrides:
+            val = overrides[key].lower()
+            return val in ("true", "1", "yes")
+        return default
+
     return {
         "app_title": s.app_title,
         "app_debug": s.app_debug,
         "auth_enabled": s.auth_enabled,
         "cors_origins": s.cors_origins,
-        "ebay_site_id": overrides.get("ebay_site_id", s.ebay_site_id),
-        "ebay_max_pages": _int("ebay_max_pages", s.ebay_max_pages),
-        "scheduler_default_interval_minutes": _int("scheduler_default_interval_minutes", s.scheduler_default_interval_minutes),
-        "scheduler_max_concurrent_polls": _int("scheduler_max_concurrent_polls", s.scheduler_max_concurrent_polls),
+        "ebay": {
+            "site_id": overrides.get("ebay_site_id", s.ebay_site_id),
+            "max_pages": _int("ebay_max_pages", s.ebay_max_pages),
+        },
+        "scheduler": {
+            "default_interval_minutes": _int("scheduler_default_interval_minutes", s.scheduler_default_interval_minutes),
+            "max_concurrent_polls": _int("scheduler_max_concurrent_polls", s.scheduler_max_concurrent_polls),
+        },
+        "scraper": {
+            "enabled": _bool("scraper_enabled", s.scraper_enabled),
+            "completed_days": _int("scraper_completed_days", s.scraper_completed_days),
+        },
     }
 
 
