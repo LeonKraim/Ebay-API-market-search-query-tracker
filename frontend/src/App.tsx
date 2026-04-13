@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { TopLoadingBar } from '@/components/layout/TopLoadingBar'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Dashboard } from '@/pages/Dashboard'
 import { QueriesPage } from '@/pages/Queries'
@@ -129,7 +128,6 @@ export default function App() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-950">
-      <TopLoadingBar />
       <Sidebar activePage={navigation.page} onNavigate={navigateToPage} />
       <main className="flex-1 overflow-y-auto p-6">
         {renderPage()}

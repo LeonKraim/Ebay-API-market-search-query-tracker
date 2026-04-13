@@ -10,6 +10,7 @@ import {
   useUpdateQuery,
   useEbayCategorySuggestions,
   useEbaySites,
+  useAppConfig,
 } from '@/api/hooks'
 import { QueryCard } from '@/components/ui/QueryCard'
 import { FullPageSpinner } from '@/components/ui/Throbber'
@@ -29,6 +30,8 @@ export function QueriesPage({ onOpenQuery }: QueriesPageProps) {
   const runMutation = useRunQueryNow()
   const stopMutation = useStopQueryPoll()
   const updateMutation = useUpdateQuery()
+  const { data: appConfig } = useAppConfig()
+  const defaultIntervalMinutes = appConfig?.scheduler?.default_interval_minutes ?? 1440
 
   const [showForm, setShowForm] = useState(false)
   const [editTarget, setEditTarget] = useState<SearchQuery | null>(null)
@@ -255,8 +258,8 @@ export function QueriesPage({ onOpenQuery }: QueriesPageProps) {
                 min={5}
                 max={10080}
                 className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
-                value={form.interval_minutes ?? 60}
-                onChange={(e) => setForm((f) => ({ ...f, interval_minutes: parseInt(e.target.value) || 60 }))}
+                value={form.interval_minutes ?? defaultIntervalMinutes}
+                onChange={(e) => setForm((f) => ({ ...f, interval_minutes: parseInt(e.target.value) || defaultIntervalMinutes }))}
               />
             </label>
           </div>
