@@ -61,6 +61,59 @@ async def list_ebay_category_suggestions(
     )
 
 
+class SettingsUpdate(BaseModel):
+    scheduler_default_interval_minutes: int | None = None
+    scheduler_max_concurrent_polls: int | None = None
+    ebay_max_pages: int | None = None
+    scraper_enabled: bool | None = None
+    scraper_completed_days: int | None = None
+
+
+@router.patch("/settings", dependencies=[Depends(verify_token)])
+async def update_settings(body: SettingsUpdate):
+    """Update editable settings in config.toml."""
+    text = _CONFIG_PATH.read_text(encoding="utf-8")
+
+    if body.scheduler_default_interval_minutes is not None:
+        text = re.sub(
+            r'(default_interval_minutes\s*=\s*)\d+',
+            rf'\g<1>{body.scheduler_default_interval_minutes}',
+            text,
+        )
+    if body.scheduler_max_concurrent_polls is not None:
+        text = re.sub(
+            r'(max_concurrent_polls\s*=\s*)\d+',
+            rf'\g<1>{body.scheduler_max_concurrent_polls}',
+            text,
+        )
+    if body.ebay_max_pages is not None:
+        text = re.sub(
+            r'(max_pages\s*=\s*)\d+',
+            rf'\g<1>{body.ebay_max_pages}',
+            text,
+        )
+    if body.scraper_enabled is not None:
+        val = "true" if body.scraper_enabled else "false"
+        # Section-aware: only replace enabled inside [scraper], not [auth]
+        text = re.sub(
+            r'(\[scraper\][^\[]*enabled\s*=\s*)(true|false)',
+            rf'\g<1>{val}',
+            text,
+            flags=re.DOTALL,
+        )
+    if body.scraper_completed_days is not None:
+        text = re.sub(
+            r'(completed_days\s*=\s*)\d+',
+            rf'\g<1>{body.scraper_completed_days}',
+            text,
+        )
+
+    _CONFIG_PATH.write_text(text, encoding="utf-8")
+    logger.info("[CONFIG] Settings updated: {body}", body=body.model_dump(exclude_none=True))
+    get_settings.cache_clear()
+    return get_settings().public_config
+
+
 @router.put("/ebay-site", dependencies=[Depends(verify_token)])
 async def update_ebay_site(site_id: str = Body(..., embed=True)):
     """Update the default eBay site in config.toml and reload settings."""

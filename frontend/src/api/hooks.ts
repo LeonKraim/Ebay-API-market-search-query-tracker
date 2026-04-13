@@ -271,6 +271,16 @@ export function useUpdateEbaySite() {
   })
 }
 
+export function useUpdateSettings() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: import('@/api/client').SettingsUpdate) => api.config.updateSettings(body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.config() })
+    },
+  })
+}
+
 export function useStopQueryPoll() {
   const qc = useQueryClient()
   return useMutation({

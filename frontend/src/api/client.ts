@@ -143,6 +143,14 @@ export interface AppConfig {
   scheduler_max_concurrent_polls: number
 }
 
+export interface SettingsUpdate {
+  scheduler_default_interval_minutes?: number
+  scheduler_max_concurrent_polls?: number
+  ebay_max_pages?: number
+  scraper_enabled?: boolean
+  scraper_completed_days?: number
+}
+
 export interface EbaySite {
   id: string
   name: string
@@ -297,6 +305,11 @@ export const api = {
       apiFetch<{ site_id: string; site_name: string }>('/config/ebay-site', {
         method: 'PUT',
         body: JSON.stringify({ site_id }),
+      }),
+    updateSettings: (body: SettingsUpdate) =>
+      apiFetch<Record<string, unknown>>('/config/settings', {
+        method: 'PATCH',
+        body: JSON.stringify(body),
       }),
   },
 

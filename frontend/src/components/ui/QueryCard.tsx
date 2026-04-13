@@ -1,6 +1,5 @@
 import { Play, Pencil, Trash2, Loader2, Square } from 'lucide-react'
 import { type SearchQuery } from '@/api/client'
-import { StatusBadge } from '@/components/ui/StatusBadge'
 import { fmtDatetime } from '@/lib/format'
 
 interface QueryCardProps {
@@ -49,17 +48,23 @@ export function QueryCard({
             {query.category_id ? ` • Category ${query.category_id}` : ' • All categories'}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation()
-            onToggleEnabled?.(query.id, !query.enabled)
-          }}
-          className="rounded-full transition-transform hover:scale-[1.03] focus:outline-none focus:ring-2 focus:ring-blue-500/60"
-          aria-label={query.enabled ? 'Disable query' : 'Enable query'}
+        <label
+          className="flex items-center gap-1.5 cursor-pointer select-none shrink-0"
+          onClick={(e) => e.stopPropagation()}
         >
-          <StatusBadge status={query.enabled ? 'enabled' : 'disabled'} />
-        </button>
+          <input
+            type="checkbox"
+            checked={query.enabled}
+            onChange={(e) => {
+              e.stopPropagation()
+              onToggleEnabled?.(query.id, e.target.checked)
+            }}
+            className="w-4 h-4 rounded accent-blue-500 cursor-pointer"
+          />
+          <span className={`text-xs font-medium ${query.enabled ? 'text-green-400' : 'text-gray-500'}`}>
+            {query.enabled ? 'Enabled' : 'Disabled'}
+          </span>
+        </label>
       </div>
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-400">
