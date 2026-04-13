@@ -7,6 +7,7 @@ Targets the current (2024-2026) eBay HTML layout.
 from __future__ import annotations
 
 import asyncio
+import random
 import re
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
@@ -19,6 +20,28 @@ from app.config import get_settings
 
 # eBay completed listings search URL
 _EBAY_COMPLETED_URL = "https://www.ebay.co.uk/sch/i.html"
+
+# Rotating User-Agent pool — realistic desktop browser strings
+_USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
+]
+
+# CAPTCHA / bot-challenge detection patterns (case-insensitive)
+_CAPTCHA_MARKERS = [
+    "captcha",
+    "robot",
+    "please verify",
+    "are you a human",
+    "unusual traffic",
+    "security measure",
+    "enter the characters",
+]
 
 
 @dataclass
@@ -180,6 +203,15 @@ def _extract_next_page_url(html: str, current_page: int) -> bool:
     return next_link is not None
 
 
+def _detect_captcha(html: str) -> bool:
+    """Return True if the HTML page appears to be a CAPTCHA / bot-challenge page."""
+    lower = html.lower()
+    for marker in _CAPTCHA_MARKERS:
+        if marker in lower:
+            return True
+    return False
+
+
 async def scrape_sold_listings(
     keyword: str,
     site_id: str | None = None,
@@ -212,16 +244,21 @@ async def scrape_sold_listings(
     )
 
     all_items: list[RawSoldItem] = []
-    headers = {
-        "User-Agent": settings.scraper_user_agent,
-        "Accept-Language": "en-GB,en;q=0.9",
-    }
+    base_delay = settings.scraper_delay_between_pages_seconds
 
-    async with httpx.AsyncClient(headers=headers, follow_redirects=True) as client:
+    async with httpx.AsyncClient(follow_redirects=True) as client:
         page = 1
         has_next = True
 
         while has_next:
+            # Rotate User-Agent per request
+            ua = random.choice(_USER_AGENTS)
+            headers = {
+                "User-Agent": ua,
+                "Accept-Language": "en-GB,en;q=0.9",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            }
+
             params = {
                 "_nkw": keyword,
                 "LH_Complete": "1",
@@ -229,13 +266,14 @@ async def scrape_sold_listings(
                 "_pgn": str(page),
             }
 
-            logger.debug("[SCRAPER] Fetching page {page}", page=page)
+            logger.debug("[SCRAPER] Fetching page {page} (UA: {ua})", page=page, ua=ua[:40])
             try:
                 for attempt in range(1, settings.ebay_retry_attempts + 1):
                     try:
                         resp = await client.get(
                             base_url,
                             params=params,
+                            headers=headers,
                             timeout=settings.ebay_request_timeout_seconds,
                         )
                         resp.raise_for_status()
@@ -251,11 +289,21 @@ async def scrape_sold_listings(
                         if attempt == settings.ebay_retry_attempts:
                             raise
 
+                # CAPTCHA detection — check before parsing
+                if _detect_captcha(resp.text):
+                    logger.warning(
+                        "[SCRAPER] CAPTCHA/bot-challenge detected on page {page} — "
+                        "aborting scrape to avoid IP escalation. "
+                        "Returning {n} items collected so far.",
+                        page=page, n=len(all_items),
+                    )
+                    break
+
                 items = _parse_page(resp.text, keyword)
 
                 if not items:
                     logger.warning(
-                        "[SCRAPER] Zero items parsed on page {page} — eBay HTML may have changed",
+                        "[SCRAPER] Zero items parsed on page {page} — eBay HTML may have changed or session blocked",
                         page=page,
                     )
                     break
@@ -265,7 +313,9 @@ async def scrape_sold_listings(
                 page += 1
 
                 if has_next:
-                    await asyncio.sleep(settings.scraper_delay_between_pages_seconds)
+                    # Randomized delay: base_delay + random jitter up to base_delay
+                    jitter = base_delay + random.uniform(0, base_delay)
+                    await asyncio.sleep(jitter)
 
             except Exception as exc:
                 logger.error("[SCRAPER] Fatal error on page {page}: {err}", page=page, err=str(exc))

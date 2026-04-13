@@ -31,6 +31,10 @@ from app.services.dedup import classify
 from app.services.ebay_finding import RawListing, fetch_all_listings
 from app.services.sold_scraper import scrape_sold_listings
 
+# How many disappeared items to insert per batch (same 32,767 param guard)
+# SoldRecord insert uses 11 columns → 11 × 2,900 = 31,900 (under 32,767)
+_DISAPPEARED_BATCH_SIZE = 2_900
+
 # Track running jobs to prevent overlap
 _running_jobs: set[int] = set()
 _running_lock = asyncio.Lock()
@@ -255,6 +259,7 @@ async def run_poll(query_id: int) -> None:
                         "image_url": s.image_url,
                         "item_url": s.item_url,
                         "scraped_at": datetime.now(timezone.utc),
+                        "source": "scraped",
                     }
                     for s in sold_items
                 ]
@@ -262,6 +267,80 @@ async def run_poll(query_id: int) -> None:
                 sold_stmt = sold_stmt.on_conflict_do_nothing(index_elements=["item_id", "sold_date"])
                 await session.execute(sold_stmt)
                 logger.info("[DB] sold_records: {n} rows inserted (ON CONFLICT DO NOTHING)", n=len(sold_rows))
+
+            # ── Disappearance tracking ─────────────────────────────────────
+            # Compare current snapshot item_ids against the previous snapshot
+            # to detect listings that vanished (likely sold or ended).
+            current_item_ids = {item.item_id for item in raw_listings}
+
+            # Find the most recent *completed* snapshot before this one
+            prev_snap_result = await session.execute(
+                select(Snapshot.id)
+                .where(
+                    Snapshot.query_id == query_id,
+                    Snapshot.id != snapshot_id,
+                    Snapshot.status == "complete",
+                )
+                .order_by(Snapshot.id.desc())
+                .limit(1)
+            )
+            prev_snap_row = prev_snap_result.scalar_one_or_none()
+
+            if prev_snap_row is not None:
+                # Get item_ids + metadata from previous snapshot
+                prev_listings_result = await session.execute(
+                    select(
+                        ListingRecord.item_id,
+                        ListingRecord.title,
+                        ListingRecord.current_price,
+                        ListingRecord.currency,
+                        ListingRecord.listing_type,
+                        ListingRecord.image_url,
+                        ListingRecord.item_url,
+                    ).where(ListingRecord.snapshot_id == prev_snap_row)
+                )
+                prev_listings = prev_listings_result.all()
+                prev_item_ids = {row.item_id for row in prev_listings}
+
+                disappeared_ids = prev_item_ids - current_item_ids
+                if disappeared_ids:
+                    # Build a lookup from prev snapshot data
+                    prev_lookup = {row.item_id: row for row in prev_listings}
+
+                    disappeared_rows = []
+                    now_utc = datetime.now(timezone.utc)
+                    for item_id in disappeared_ids:
+                        prev = prev_lookup[item_id]
+                        disappeared_rows.append({
+                            "query_id": query_id,
+                            "item_id": item_id,
+                            "title": (prev.title or "")[:500],
+                            "sold_price": prev.current_price,
+                            "currency": prev.currency or "GBP",
+                            "sold_date": now_utc,
+                            "listing_type": prev.listing_type,
+                            "image_url": prev.image_url,
+                            "item_url": prev.item_url,
+                            "scraped_at": now_utc,
+                            "source": "disappeared",
+                        })
+
+                    # Batch insert with ON CONFLICT DO NOTHING
+                    for _batch_start in range(0, len(disappeared_rows), _DISAPPEARED_BATCH_SIZE):
+                        _batch = disappeared_rows[_batch_start : _batch_start + _DISAPPEARED_BATCH_SIZE]
+                        dis_stmt = pg_insert(SoldRecord).values(_batch)
+                        dis_stmt = dis_stmt.on_conflict_do_nothing(index_elements=["item_id", "sold_date"])
+                        await session.execute(dis_stmt)
+
+                    logger.info(
+                        "[POLL] Disappearance tracking: {n} items vanished between snapshots "
+                        "(prev_snapshot=#{prev}, current_snapshot=#{cur})",
+                        n=len(disappeared_ids), prev=prev_snap_row, cur=snapshot_id,
+                    )
+                else:
+                    logger.debug("[POLL] Disappearance tracking: no items vanished since previous snapshot")
+            else:
+                logger.debug("[POLL] Disappearance tracking: no previous snapshot — skipping")
 
             # Close snapshot
             elapsed = time.monotonic() - start_ts

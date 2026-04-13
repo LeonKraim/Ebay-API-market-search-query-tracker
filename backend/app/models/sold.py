@@ -24,6 +24,9 @@ class SoldRecord(Base):
     listing_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
     image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     item_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    source: Mapped[str] = mapped_column(
+        String(20), default="scraped", server_default="scraped", nullable=False
+    )
     scraped_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
