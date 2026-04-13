@@ -212,10 +212,15 @@ async def run_poll(query_id: int) -> None:
             ]
 
             # Insert new listings with ON CONFLICT DO NOTHING
+            # Chunk into batches of 3,000 rows to stay under PostgreSQL's 65,535 bind-parameter limit
+            # (19 columns × 3,000 rows = 57,000 params — safely under the hard limit)
+            _LISTING_BATCH_SIZE = 3_000
             if new_rows:
-                stmt = pg_insert(ListingRecord).values(new_rows)
-                stmt = stmt.on_conflict_do_nothing(index_elements=["item_id", "snapshot_id"])
-                await session.execute(stmt)
+                for _batch_start in range(0, len(new_rows), _LISTING_BATCH_SIZE):
+                    _batch = new_rows[_batch_start : _batch_start + _LISTING_BATCH_SIZE]
+                    stmt = pg_insert(ListingRecord).values(_batch)
+                    stmt = stmt.on_conflict_do_nothing(index_elements=["item_id", "snapshot_id"])
+                    await session.execute(stmt)
                 logger.info(
                     "[DB] listing_records: {n} new rows inserted (snapshot #{sid})",
                     n=len(new_rows), sid=snapshot_id,
